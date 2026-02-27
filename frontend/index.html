@@ -1,38 +1,147 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>QuranSpeak Reader</title>
-    <link rel="stylesheet" href="css/style.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>QuranSpeak — Reader</title>
+  <style>
+    body{font-family:system-ui,Segoe UI,Arial; margin:0; background:#f6f7fb; color:#111;}
+    header{background:#0a241a; color:#fff; padding:18px 16px;}
+    header h1{margin:0; font-size:18px;}
+    .wrap{max-width:900px; margin:18px auto; padding:0 12px;}
+    .card{background:#fff; border:1px solid #e7e7ef; border-radius:12px; padding:14px; box-shadow:0 6px 18px rgba(0,0,0,.06);}
+    .row{display:flex; gap:10px; flex-wrap:wrap; align-items:center;}
+    input{padding:10px 12px; border:1px solid #d8d8e6; border-radius:10px; font-size:14px; width:160px;}
+    button{padding:10px 14px; border:0; border-radius:10px; background:#0F8A5F; color:#fff; font-weight:600; cursor:pointer;}
+    button:disabled{opacity:.6; cursor:not-allowed;}
+    .muted{color:#666; font-size:13px;}
+    .ayahs{margin-top:14px; display:flex; flex-direction:column; gap:10px;}
+    .ayah{border:1px solid #eee; border-radius:10px; padding:12px; background:#fcfcff;}
+    .ayah .num{font-size:12px; color:#666; margin-bottom:6px;}
+    .ayah .text{font-size:22px; line-height:1.9; direction:rtl; text-align:right; font-family: "Amiri", "Scheherazade New", serif;}
+    .error{margin-top:10px; color:#b00020; font-weight:600;}
+    .ok{margin-top:10px; color:#0a7b3d; font-weight:600;}
+    footer{margin:18px 0; text-align:center; color:#777; font-size:12px;}
+    code{background:#f0f0f6; padding:2px 6px; border-radius:6px;}
+  </style>
 </head>
-
 <body>
+  <header>
+    <h1>QuranSpeak — Reader</h1>
+  </header>
 
-    <header class="header">
-        <h1>📖 QuranSpeak</h1>
-        <div class="lang-toggle">
-            <button>EN</button>
-            <button>Pashto</button>
-            <button>Arabic</button>
+  <div class="wrap">
+    <div class="card">
+      <div class="row">
+        <label>
+          <div class="muted">Surah number (1–114)</div>
+          <input id="surahInput" type="number" min="1" max="114" value="1" />
+        </label>
+
+        <button id="loadBtn">Load Surah</button>
+
+        <div class="muted">
+          API: <code id="apiUrl">http://127.0.0.1:8000/api/surah/1/ayahs</code>
         </div>
-    </header>
+      </div>
 
-    <div class="container">
+      <div id="status" class="muted" style="margin-top:10px;"></div>
+      <div id="error" class="error" style="display:none;"></div>
 
-        <!-- LEFT SIDE: SURAH LIST -->
-        <div class="sidebar">
-            <h2>Surahs</h2>
-            <ul id="surahList"></ul>
-        </div>
-
-        <!-- RIGHT SIDE: AYAH READER -->
-        <div class="reader">
-            <h2 id="surahTitle">Select a Surah</h2>
-            <div id="ayahContainer"></div>
-        </div>
-
+      <div id="ayahs" class="ayahs"></div>
     </div>
 
-    <script src="js/app.js"></script>
+    <footer>
+      Tip: Keep your backend running with <code>uvicorn main:app --reload</code>
+    </footer>
+  </div>
+
+  <script>
+    const surahInput = document.getElementById("surahInput");
+    const loadBtn = document.getElementById("loadBtn");
+    const ayahsDiv = document.getElementById("ayahs");
+    const statusDiv = document.getElementById("status");
+    const errorDiv = document.getElementById("error");
+    const apiUrlCode = document.getElementById("apiUrl");
+
+    function setLoading(isLoading){
+      loadBtn.disabled = isLoading;
+      statusDiv.textContent = isLoading ? "Loading…" : "";
+    }
+
+    function showError(msg){
+      errorDiv.style.display = "block";
+      errorDiv.textContent = msg;
+    }
+
+    function clearError(){
+      errorDiv.style.display = "none";
+      errorDiv.textContent = "";
+    }
+
+    function renderAyahs(items){
+      ayahsDiv.innerHTML = "";
+      for(const item of items){
+        const box = document.createElement("div");
+        box.className = "ayah";
+        box.innerHTML = `
+          <div class="num">Ayah ${item.ayah}</div>
+          <div class="text">${escapeHtml(item.text)}</div>
+        `;
+        ayahsDiv.appendChild(box);
+      }
+    }
+
+    function escapeHtml(str){
+      return String(str)
+        .replaceAll("&","&amp;")
+        .replaceAll("<","&lt;")
+        .replaceAll(">","&gt;")
+        .replaceAll('"',"&quot;")
+        .replaceAll("'","&#039;");
+    }
+
+    async function loadSurah(){
+      clearError();
+
+      const surahId = Number(surahInput.value || 1);
+      if(!Number.isInteger(surahId) || surahId < 1 || surahId > 114){
+        showError("Please enter a Surah number from 1 to 114.");
+        return;
+      }
+
+      const url = `http://127.0.0.1:8000/api/surah/${surahId}/ayahs`;
+      apiUrlCode.textContent = url;
+
+      setLoading(true);
+      try{
+        const res = await fetch(url);
+        if(!res.ok){
+          const body = await res.text();
+          throw new Error(`Server returned ${res.status}. ${body}`);
+        }
+        const data = await res.json();
+
+        if(!Array.isArray(data)){
+          throw new Error("Unexpected response format. Expected a list of ayahs.");
+        }
+
+        renderAyahs(data);
+        statusDiv.textContent = `Loaded Surah ${surahId} ✅ (${data.length} ayahs)`;
+      }catch(err){
+        showError("Could not load from backend. Make sure it is running on 127.0.0.1:8000.\n\n" + err.message);
+      }finally{
+        setLoading(false);
+      }
+    }
+
+    loadBtn.addEventListener("click", loadSurah);
+    surahInput.addEventListener("keydown", (e) => {
+      if(e.key === "Enter") loadSurah();
+    });
+
+    // Auto-load Surah 1 on first open
+    loadSurah();
+  </script>
 </body>
 </html>
