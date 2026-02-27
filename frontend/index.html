@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>QuranSpeak Reader</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+
+    <header class="header">
+        <h1>📖 QuranSpeak</h1>
+        <div class="lang-toggle">
+            <button>EN</button>
+            <button>Pashto</button>
+            <button>Arabic</button>
+        </div>
+    </header>
+
+    <div class="container">
+
+        <!-- LEFT SIDE: SURAH LIST -->
+        <div class="sidebar">
+            <h2>Surahs</h2>
+            <ul id="surahList"></ul>
+        </div>
+
+        <!-- RIGHT SIDE: AYAH READER -->
+        <div class="reader">
+            <h2 id="surahTitle">Select a Surah</h2>
+            <div id="ayahContainer"></div>
+        </div>
+
+    </div>
+
+    <script src="js/app.js"></script>
+</body>
+</html>

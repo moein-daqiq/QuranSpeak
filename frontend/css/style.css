@@ -1,0 +1,62 @@
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background: #f5f5f5;
+}
+
+.header {
+    background: #0a5c3b;
+    color: white;
+    padding: 15px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.container {
+    display: flex;
+    height: calc(100vh - 70px);
+}
+
+.sidebar {
+    width: 30%;
+    background: white;
+    border-right: 1px solid #ddd;
+    overflow-y: scroll;
+    padding: 10px;
+}
+
+.sidebar ul {
+    list-style: none;
+    padding: 0;
+}
+
+.sidebar li {
+    padding: 10px;
+    border-bottom: 1px solid #eee;
+    cursor: pointer;
+}
+
+.sidebar li:hover {
+    background: #f0f0f0;
+}
+
+.reader {
+    width: 70%;
+    padding: 20px;
+    overflow-y: scroll;
+}
+
+.ayah {
+    font-size: 22px;
+    margin-bottom: 15px;
+    direction: rtl;
+    text-align: right;
+    line-height: 1.8;
+}
+
+.ayah-number {
+    color: #0a5c3b;
+    font-weight: bold;
+    margin-left: 10px;
+}
